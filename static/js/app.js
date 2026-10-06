@@ -1,153 +1,200 @@
+// Pre-filled samples matching report screenshots
 const SAMPLES = {
-    real: {
-        title: "NASA James Webb Space Telescope discovers oldest known galaxy",
-        text: "Astronomers using the James Webb Space Telescope have identified a galaxy that formed just 300 million years after the Big Bang. Peer-reviewed findings published in Nature confirm spectral measurements consistent with early cosmic expansion."
-    },
-    fake: {
-        title: "Secret miracle root cures all forms of cancer in 48 hours big pharma does not want you to know",
-        text: "Doctors are stunned! This ancient mountain herb destroys every cancer cell in two days. Government scientists are hiding the miracle remedy to protect pharmaceutical trillion-dollar profits. Order now before it is banned worldwide!"
-    }
+    real: "ISRO successfully launches PSLV-C51, placing multiple satellites into orbit.",
+    fake: "Government to give free laptops to all students across the country next month."
 };
 
-function loadSample(type) {
+function fillSample(type) {
     if (SAMPLES[type]) {
-        document.getElementById('newsTitle').value = SAMPLES[type].title;
-        document.getElementById('newsText').value = SAMPLES[type].text;
-        hideResults();
+        document.getElementById('news-input').value = SAMPLES[type];
     }
 }
 
-function hideResults() {
-    document.getElementById('resultCard').classList.add('d-none');
-    document.getElementById('errorAlert').classList.add('d-none');
+// Tab Switching
+function showTab(tabName) {
+    document.getElementById('page-home').classList.add('d-none');
+    document.getElementById('page-history').classList.add('d-none');
+    document.getElementById('page-about').classList.add('d-none');
+
+    document.getElementById('nav-home').classList.remove('active');
+    document.getElementById('nav-history').classList.remove('active');
+    document.getElementById('nav-about').classList.remove('active');
+
+    document.getElementById('page-' + tabName).classList.remove('d-none');
+    document.getElementById('nav-' + tabName).classList.add('active');
+
+    if (tabName === 'history') {
+        renderHistoryTable();
+    }
 }
 
-// Form submission handler
-document.getElementById('detectForm').addEventListener('submit', async function(e) {
+// Prediction Form Submission
+document.getElementById('news-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    hideResults();
-
-    const title = document.getElementById('newsTitle').value.trim();
-    const text = document.getElementById('newsText').value.trim();
-
-    if (!text && !title) {
-        showError("Please enter a headline or article content to analyze.");
+    const text = document.getElementById('news-input').value.trim();
+    if (!text) {
+        alert("Please enter a news headline or article.");
         return;
     }
 
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const analyzeSpinner = document.getElementById('analyzeSpinner');
-    const analyzeIcon = document.getElementById('analyzeIcon');
-
-    // UI Loading state
-    analyzeBtn.disabled = true;
-    analyzeSpinner.classList.remove('d-none');
-    analyzeIcon.classList.add('d-none');
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Checking...';
 
     try {
-        const response = await fetch('/predict', {
+        const res = await fetch('/predict', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, text })
+            body: JSON.stringify({ text: text })
         });
+        const data = await res.json();
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Failed to analyze article.");
+        if (data.error) {
+            alert(data.error);
+        } else {
+            renderResultCard(text, data);
+            saveToHistory(text, data);
         }
-
-        displayResult(data);
     } catch (err) {
-        showError(err.message);
+        alert("Error connecting to prediction server: " + err.message);
     } finally {
-        analyzeBtn.disabled = false;
-        analyzeSpinner.classList.add('d-none');
-        analyzeIcon.classList.remove('d-none');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-search me-2"></i>Check News';
     }
 });
 
-function displayResult(data) {
-    const card = document.getElementById('resultCard');
-    const badge = document.getElementById('verdictBadge');
-    const title = document.getElementById('verdictTitle');
-    const desc = document.getElementById('verdictDesc');
-    const conf = document.getElementById('confidenceText');
-    const probRealVal = document.getElementById('probRealVal');
-    const probRealBar = document.getElementById('probRealBar');
-    const probFakeVal = document.getElementById('probFakeVal');
-    const probFakeBar = document.getElementById('probFakeBar');
-    const keywordsBadges = document.getElementById('keywordsBadges');
-
+// Render Result Card matching report screenshot design
+function renderResultCard(text, data) {
+    const container = document.getElementById('result-container');
     const isReal = data.label === 'REAL';
+    const conf = data.confidence.toFixed(1);
 
-    card.className = "mt-4 p-4 rounded-3 " + (isReal ? "bg-real" : "bg-fake");
-    card.classList.remove('d-none');
+    let html = '';
 
     if (isReal) {
-        badge.className = "badge bg-success fs-5 px-3 py-2 rounded-pill";
-        badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> VERIFIED REAL NEWS';
-        title.className = "fw-bold mb-2 text-success";
-        title.innerText = "Likely Authentic & Verified";
-        desc.innerText = "Linguistic syntax, source markers, and lexical distribution indicate authentic news reporting.";
+        html = `
+        <div class="result-card-real shadow-sm">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="result-icon-real">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div>
+                    <h3 class="result-title-real">Real News</h3>
+                    <div class="text-muted small">Confidence: <strong>${conf}%</strong></div>
+                </div>
+            </div>
+
+            <div class="quote-box">
+                "${text}"
+            </div>
+
+            <div class="details-box">
+                <h6 class="fw-bold mb-2">Prediction Details</h6>
+                <div class="detail-row">
+                    <span class="detail-label">Prediction</span>
+                    <span class="detail-val text-success">Real</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Confidence Score</span>
+                    <span class="detail-val">${conf}%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Model Used</span>
+                    <span class="detail-val">Passive-Aggressive (TF-IDF)</span>
+                </div>
+            </div>
+        </div>
+        `;
     } else {
-        badge.className = "badge bg-danger fs-5 px-3 py-2 rounded-pill";
-        badge.innerHTML = '<i class="bi bi-exclamation-octagon-fill me-1"></i> FLAGGED AS FAKE NEWS';
-        title.className = "fw-bold mb-2 text-danger";
-        title.innerText = "Sensationalist or Misleading Content";
-        desc.innerText = "Contains emotional triggers, exaggerations, or phrasing patterns characteristic of unreliable or fabricated stories.";
+        html = `
+        <div class="result-card-fake shadow-sm">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="result-icon-fake">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+                <div>
+                    <h3 class="result-title-fake">Fake News</h3>
+                    <div class="text-muted small">Confidence: <strong>${conf}%</strong></div>
+                </div>
+            </div>
+
+            <div class="quote-box">
+                "${text}"
+            </div>
+
+            <div class="details-box">
+                <h6 class="fw-bold mb-2">Prediction Details</h6>
+                <div class="detail-row">
+                    <span class="detail-label">Prediction</span>
+                    <span class="detail-val text-danger">Fake</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Confidence Score</span>
+                    <span class="detail-val">${conf}%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Model Used</span>
+                    <span class="detail-val">Passive-Aggressive (TF-IDF)</span>
+                </div>
+            </div>
+        </div>
+        `;
     }
 
-    conf.innerText = `Confidence: ${data.confidence}%`;
-    probRealVal.innerText = `${data.probability_real}%`;
-    probRealBar.style.width = `${data.probability_real}%`;
-    probFakeVal.innerText = `${data.probability_fake}%`;
-    probFakeBar.style.width = `${data.probability_fake}%`;
-
-    // Render keyword badges
-    keywordsBadges.innerHTML = "";
-    if (data.key_tokens && data.key_tokens.length > 0) {
-        data.key_tokens.forEach(tok => {
-            const span = document.createElement('span');
-            span.className = "badge-keyword";
-            span.innerText = tok;
-            keywordsBadges.appendChild(span);
-        });
-    } else {
-        keywordsBadges.innerHTML = '<span class="text-muted small">No specific keyword bias detected.</span>';
-    }
-
-    // Scroll smoothly to results
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    container.innerHTML = html;
+    container.classList.remove('d-none');
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function showError(msg) {
-    const alert = document.getElementById('errorAlert');
-    alert.innerText = msg;
-    alert.classList.remove('d-none');
+// Save Prediction to History (localStorage)
+function saveToHistory(text, data) {
+    let history = JSON.parse(localStorage.getItem('fake_news_history') || '[]');
+    const now = new Date();
+    const timeStr = now.toISOString().split('T')[0] + ' ' + now.toTimeString().split(' ')[0].substring(0, 5);
+
+    history.unshift({
+        text: text,
+        prediction: data.label,
+        confidence: data.confidence.toFixed(1) + '%',
+        datetime: timeStr
+    });
+
+    // Keep max 20 entries
+    if (history.length > 20) history.pop();
+    localStorage.setItem('fake_news_history', JSON.stringify(history));
 }
 
-async function triggerTrain() {
-    const icon = document.getElementById('trainIcon');
-    if (icon) icon.classList.add('spin-animation');
+// Render History Table
+function renderHistoryTable() {
+    const tbody = document.getElementById('history-body');
+    let history = JSON.parse(localStorage.getItem('fake_news_history') || '[]');
 
-    if (!confirm("Start model training now? This will train on the dataset and update metrics.")) {
-        if (icon) icon.classList.remove('spin-animation');
+    if (history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No prediction history recorded yet. Test some news on the Home tab!</td></tr>`;
         return;
     }
 
-    try {
-        const res = await fetch('/train', { method: 'POST' });
-        const data = await res.json();
-        if (data.success && data.metrics) {
-            alert(`🎉 Training Completed Successfully! Model accuracy: ${data.metrics.accuracy}%`);
-            window.location.reload();
-        } else {
-            alert("Training Error: " + (data.error || "Unknown issue"));
-        }
-    } catch (e) {
-        alert("Failed to connect to training server: " + e.message);
-    } finally {
-        if (icon) icon.classList.remove('spin-animation');
+    let rows = '';
+    history.forEach((item, index) => {
+        const badgeClass = item.prediction === 'REAL' ? 'badge-real' : 'badge-fake';
+        const predText = item.prediction === 'REAL' ? 'Real' : 'Fake';
+
+        rows += `
+        <tr>
+            <td>${index + 1}</td>
+            <td class="text-truncate" style="max-width: 380px;">${item.text}</td>
+            <td><span class="${badgeClass}">${predText}</span></td>
+            <td><strong>${item.confidence}</strong></td>
+            <td class="text-muted small">${item.datetime}</td>
+        </tr>
+        `;
+    });
+    tbody.innerHTML = rows;
+}
+
+function clearHistory() {
+    if (confirm("Are you sure you want to clear prediction history?")) {
+        localStorage.removeItem('fake_news_history');
+        renderHistoryTable();
     }
 }
