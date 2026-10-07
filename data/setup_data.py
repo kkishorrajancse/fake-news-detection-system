@@ -6,6 +6,9 @@ DATASET_PATH = os.path.join(DATA_DIR, "news_dataset.csv")
 
 SAMPLE_ARTICLES = [
     # Real News (Label = 1)
+    {"title": "ISRO successfully launches PSLV-C51 placing multiple satellites into orbit",
+     "text": "The Indian Space Research Organisation (ISRO) successfully launched PSLV-C51 carrying primary satellite Amazonia-1 along with 18 co-passenger satellites from Satish Dhawan Space Centre Sriharikota.",
+     "label": 1},
     {"title": "NASA James Webb Space Telescope discovers oldest known galaxy",
      "text": "Astronomers using the James Webb Space Telescope have identified a galaxy that formed just 300 million years after the Big Bang. Peer-reviewed findings published in Nature confirm spectral measurements consistent with early cosmic expansion.",
      "label": 1},
@@ -111,16 +114,29 @@ def load_or_create_dataset():
             else:
                 return d.iloc[:, 0].fillna('').astype(str)
 
-        df_true['content'] = get_text_content(df_true)
+        # Clean publisher preambles like "WASHINGTON (Reuters) - " or "(Reuters) - "
+        import re
+        def clean_reuters_preamble(text):
+            return re.sub(r'^[A-Z\s,]+\s*\([A-Za-z0-9_.]+\)\s*-\s*', '', text)
+
+        df_true['content'] = get_text_content(df_true).apply(clean_reuters_preamble)
         df_true['label'] = 1
         
         df_fake['content'] = get_text_content(df_fake)
         df_fake['label'] = 0
+
+        # Load domain-diverse sample articles (ISRO, Space, Tech, Science, Health)
+        df_samples = pd.DataFrame(SAMPLE_ARTICLES)
+        df_samples['content'] = df_samples['title'] + " " + df_samples['text']
+        df_samples = df_samples[['content', 'label']]
         
-        df = pd.concat([df_true[['content', 'label']], df_fake[['content', 'label']]], ignore_index=True)
+        # Combine Kaggle ISOT dataset with domain sample set (replicated for balanced domain representation)
+        df_sample_boost = pd.concat([df_samples] * 300, ignore_index=True)
+        
+        df = pd.concat([df_true[['content', 'label']], df_fake[['content', 'label']], df_sample_boost], ignore_index=True)
         df = df[df['content'].str.strip() != '']
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)
-        print(f"Loaded {len(df)} total articles from Kaggle files.")
+        print(f"Loaded {len(df)} total articles (Kaggle ISOT + Domain Sample Boost).")
         return df
 
     # If already created starter dataset exists, load it

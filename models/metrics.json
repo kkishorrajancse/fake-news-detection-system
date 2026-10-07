@@ -1,19 +1,19 @@
 {
     "model_name": "Passive-Aggressive Classifier",
-    "accuracy": 91.55,
-    "precision": 91.24,
-    "recall": 91.96,
-    "f1_score": 91.59,
-    "total_samples": 6335,
+    "accuracy": 97.91,
+    "precision": 98.09,
+    "recall": 97.81,
+    "f1_score": 97.95,
+    "total_samples": 13842,
     "confusion_matrix": [
         [
-            577,
-            56
+            1327,
+            27
         ],
         [
-            51,
-            583
+            31,
+            1384
         ]
     ],
-    "trained_at": "2026-09-30 22:54:42"
+    "trained_at": "2026-10-07 22:45:19"
 }
