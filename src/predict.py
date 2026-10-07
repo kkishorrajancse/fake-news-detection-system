@@ -14,16 +14,20 @@ VECTORIZER_PATH = os.path.join(PROJECT_ROOT, "models", "tfidf_vectorizer.pkl")
 
 _model = None
 _vectorizer = None
+_last_mtime = 0
 
 def load_artifacts():
-    global _model, _vectorizer
-    if _model is None or _vectorizer is None:
-        if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
-            raise FileNotFoundError(
-                "Model files not found! Please run training first via 'python src/train.py'."
-            )
+    global _model, _vectorizer, _last_mtime
+    if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
+        raise FileNotFoundError(
+            "Model files not found! Please run training first via 'python src/train.py'."
+        )
+    
+    current_mtime = os.path.getmtime(MODEL_PATH)
+    if _model is None or _vectorizer is None or current_mtime > _last_mtime:
         _model = joblib.load(MODEL_PATH)
         _vectorizer = joblib.load(VECTORIZER_PATH)
+        _last_mtime = current_mtime
     return _model, _vectorizer
 
 def predict_news(text: str):
