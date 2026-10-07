@@ -8,6 +8,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.preprocess import clean_text
+from src.fact_verifier import verify_claim_and_evidence
 
 MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "fake_news_model.pkl")
 VECTORIZER_PATH = os.path.join(PROJECT_ROOT, "models", "tfidf_vectorizer.pkl")
@@ -32,92 +33,57 @@ def load_artifacts():
 
 def predict_news(text: str):
     """
-    Analyzes input text and predicts whether it is REAL or FAKE.
-    Returns:
-        dict: {
-            'label': 'REAL' or 'FAKE',
-            'confidence': float (0.0 to 100.0),
-            'probability_real': float (0.0 to 1.0),
-            'probability_fake': float (0.0 to 1.0),
-            'key_tokens': list of top contributing word stems
-        }
+    Multi-source evidence-based prediction gateway.
+    Combines ML classification with Named Entity Recognition, Temporal Verification,
+    Claim Extraction, and Multi-Source Evidence Retrieval.
     """
-    model, vectorizer = load_artifacts()
-    
-    cleaned = clean_text(text)
-    if not cleaned:
-        return {
-            'label': 'UNKNOWN',
-            'confidence': 0.0,
-            'probability_real': 0.5,
-            'probability_fake': 0.5,
-            'key_tokens': [],
-            'error': 'Text is too short or contains no valid alphabetical words.'
-        }
-    
-    # Vectorize
-    vec = vectorizer.transform([cleaned])
-    
-    # Check if any words matched vocabulary
-    if vec.nnz == 0:
-        return {
-            'label': 'UNKNOWN',
-            'confidence': 50.0,
-            'probability_real': 50.0,
-            'probability_fake': 50.0,
-            'key_tokens': [],
-            'error': 'Words in this short phrase are not in the dataset vocabulary. Please paste full news headlines or article paragraphs for accurate prediction.'
-        }
-    
-    # Calculate confidence / probability
-    if hasattr(model, 'predict_proba'):
-        probs = model.predict_proba(vec)[0]
-        prob_fake = float(probs[0])
-        prob_real = float(probs[1])
-    else:
-        # For PassiveAggressiveClassifier, calibrate decision_function with sigmoid
-        decision = float(model.decision_function(vec)[0])
-        prob_real = 1.0 / (1.0 + np.exp(-decision))
-        prob_fake = 1.0 - prob_real
+    ml_result = {}
+    try:
+        model, vectorizer = load_artifacts()
+        cleaned = clean_text(text)
+        if cleaned:
+            vec = vectorizer.transform([cleaned])
+            if hasattr(model, 'predict_proba'):
+                probs = model.predict_proba(vec)[0]
+                prob_fake = float(probs[0])
+                prob_real = float(probs[1])
+            else:
+                decision = float(model.decision_function(vec)[0])
+                prob_real = 1.0 / (1.0 + np.exp(-decision))
+                prob_fake = 1.0 - prob_real
 
-    # Prediction
-    is_real = prob_real >= 0.5
-    label = "REAL" if is_real else "FAKE"
-    confidence = (prob_real if is_real else prob_fake) * 100.0
+            is_real = prob_real >= 0.5
+            ml_result = {
+                'label': "REAL" if is_real else "FAKE",
+                'confidence': (prob_real if is_real else prob_fake) * 100.0,
+                'probability_real': prob_real * 100,
+                'probability_fake': prob_fake * 100
+            }
+    except Exception:
+        pass
 
-    # Extract top keywords matching model vocabulary
-    feature_names = vectorizer.get_feature_names_out()
-    non_zero_indices = vec.nonzero()[1]
+    # Fact verification pipeline
+    verification = verify_claim_and_evidence(text, ml_result)
     
-    # Score features based on TF-IDF weight * model coefficient
-    key_tokens = []
-    if hasattr(model, 'coef_'):
-        coefs = model.coef_[0]
-        scored_tokens = []
-        for idx in non_zero_indices:
-            word = feature_names[idx]
-            weight = vec[0, idx] * coefs[idx]
-            scored_tokens.append((word, weight))
-        
-        # If Real, sort descending; if Fake, sort ascending
-        if is_real:
-            scored_tokens.sort(key=lambda x: x[1], reverse=True)
-        else:
-            scored_tokens.sort(key=lambda x: x[1])
-        key_tokens = [t[0] for t in scored_tokens[:6]]
-
-    return {
-        'label': label,
-        'confidence': round(confidence, 1),
-        'probability_real': round(prob_real * 100, 1),
-        'probability_fake': round(prob_fake * 100, 1),
-        'key_tokens': key_tokens,
-        'cleaned_preview': cleaned[:120] + "..." if len(cleaned) > 120 else cleaned
+    # Structure full response maintaining backward compatibility
+    prob_real = verification['confidence'] if verification['verdict'] == 'TRUE' else (100.0 - verification['confidence'])
+    prob_fake = verification['confidence'] if verification['verdict'] == 'FALSE' else (100.0 - verification['confidence'])
+    
+    response = {
+        'label': verification['verdict'],
+        'verdict': verification['verdict'],
+        'confidence': verification['confidence'],
+        'probability_real': round(max(0.0, min(100.0, prob_real)), 1),
+        'probability_fake': round(max(0.0, min(100.0, prob_fake)), 1),
+        'claim': verification['claim'],
+        'explanation': verification['explanation'],
+        'evidence': verification['evidence'],
+        'source_credibility': verification['source_credibility'],
+        'verification_time': verification['verification_time'],
+        'entities': verification['entities']
     }
 
+    return response
+
 if __name__ == "__main__":
-    test_real = "NASA telescope observes ancient stars confirming standard astrophysical cosmological models."
-    test_fake = "Secret miracle tea eliminates all terminal illness in 24 hours doctors furious!"
-    
-    print("Test Real:", predict_news(test_real))
-    print("Test Fake:", predict_news(test_fake))
+    print(predict_news("Joseph Vijay is the Chief Minister of Tamil Nadu."))

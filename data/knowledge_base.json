@@ -1,0 +1,130 @@
+{
+    "office_holders": [
+        {
+            "person": "M. K. Stalin",
+            "aliases": ["Stalin", "M.K. Stalin", "MK Stalin", "Muthuvel Karunanidhi Stalin"],
+            "position": "Chief Minister",
+            "location": "Tamil Nadu",
+            "country": "India",
+            "party": "DMK",
+            "start_year": 2021,
+            "end_year": null,
+            "is_current": true
+        },
+        {
+            "person": "Edappadi K. Palaniswami",
+            "aliases": ["EPS", "Edappadi Palaniswami"],
+            "position": "Chief Minister",
+            "location": "Tamil Nadu",
+            "country": "India",
+            "party": "AIADMK",
+            "start_year": 2017,
+            "end_year": 2021,
+            "is_current": false
+        },
+        {
+            "person": "J. Jayalalithaa",
+            "aliases": ["Jayalalithaa", "Jayalalitha"],
+            "position": "Chief Minister",
+            "location": "Tamil Nadu",
+            "country": "India",
+            "party": "AIADMK",
+            "start_year": 2015,
+            "end_year": 2016,
+            "is_current": false
+        },
+        {
+            "person": "Narendra Modi",
+            "aliases": ["Modi", "Prime Minister Modi"],
+            "position": "Prime Minister",
+            "location": "India",
+            "country": "India",
+            "party": "BJP",
+            "start_year": 2014,
+            "end_year": null,
+            "is_current": true
+        },
+        {
+            "person": "Droupadi Murmu",
+            "aliases": ["President Murmu"],
+            "position": "President",
+            "location": "India",
+            "country": "India",
+            "party": "BJP",
+            "start_year": 2022,
+            "end_year": null,
+            "is_current": true
+        },
+        {
+            "person": "R. N. Ravi",
+            "aliases": ["RN Ravi"],
+            "position": "Governor",
+            "location": "Tamil Nadu",
+            "country": "India",
+            "party": "Government",
+            "start_year": 2021,
+            "end_year": null,
+            "is_current": true
+        }
+    ],
+    "persons_and_parties": [
+        {
+            "person": "Joseph Vijay",
+            "aliases": ["Vijay", "Actor Vijay", "Thalapathy Vijay"],
+            "role": "Actor & Politician",
+            "party": "Tamilaga Vettri Kazhagam (TVK)",
+            "is_office_holder": false,
+            "current_position": null,
+            "notes": "Founded TVK party in 2024. He is NOT the Chief Minister of Tamil Nadu."
+        }
+    ],
+    "sports_events": [
+        {
+            "event": "Cricket World Cup",
+            "year": 2023,
+            "winner": "Australia",
+            "runner_up": "India",
+            "notes": "Australia won the 2023 ICC Men's Cricket World Cup beating India in the final."
+        },
+        {
+            "event": "Cricket World Cup",
+            "year": 2011,
+            "winner": "India",
+            "runner_up": "Sri Lanka",
+            "notes": "India won the 2011 ICC Men's Cricket World Cup beating Sri Lanka."
+        },
+        {
+            "event": "T20 World Cup",
+            "year": 2024,
+            "winner": "India",
+            "runner_up": "South Africa",
+            "notes": "India won the 2024 ICC Men's T20 World Cup beating South Africa."
+        }
+    ],
+    "science_and_tech_facts": [
+        {
+            "topic": "NASA James Webb Space Telescope",
+            "fact": "The James Webb Space Telescope conducts deep space infrared astronomical observations confirming early galaxy formation.",
+            "status": "VERIFIED_TRUE"
+        },
+        {
+            "topic": "ISRO PSLV Mission",
+            "fact": "ISRO operates the Polar Satellite Launch Vehicle (PSLV) launching earth observation and commercial satellites from Sriharikota.",
+            "status": "VERIFIED_TRUE"
+        }
+    ],
+    "government_schemes": [
+        {
+            "scheme": "Kalaignar Magalir Urimai Thittam",
+            "state": "Tamil Nadu",
+            "details": "Monthly financial assistance of Rs 1,000 provided to eligible women heads of families in Tamil Nadu.",
+            "status": "VERIFIED_TRUE"
+        },
+        {
+            "scheme": "Pudhumai Penn Scheme",
+            "state": "Tamil Nadu",
+            "details": "Financial assistance of Rs 1,000 per month for female government school students pursuing higher education.",
+            "status": "VERIFIED_TRUE"
+        }
+    ]
+}

@@ -67,8 +67,8 @@ import threading
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🌐 Starting Fake News Detection Website on http://127.0.0.1:5000")
+    print("Starting Fake News Detection Website on http://127.0.0.1:5000")
     print("=" * 60)
-    # Automatically open default browser after server starts
-    threading.Timer(1.5, lambda: webbrowser.open("http://127.0.0.1:5000")).start()
-    app.run(debug=True, port=5000)
+    app.run(host="127.0.0.1", port=5000, debug=False)
+
+
