@@ -62,10 +62,11 @@ def query_local_knowledge_base(entities: dict, claim_text: str):
             pos_match = not position or holder["position"].lower() == position.lower()
             
             if loc_match and pos_match:
+                url_link = "https://india.gov.in" if holder['location'].lower() == "india" else "https://tn.gov.in"
                 if holder["is_current"]:
                     evidences.append({
                         "source": f"Official {holder['location']} Government Registry & Election Records",
-                        "url": "https://tn.gov.in/chief_minister",
+                        "url": url_link,
                         "date": "2026-10-07",
                         "snippet": f"The current official {holder['position']} of {holder['location']} is {holder['person']} ({holder['party']}), serving since {holder['start_year']}.",
                         "credibility": "High",
@@ -76,7 +77,7 @@ def query_local_knowledge_base(entities: dict, claim_text: str):
                 else:
                     evidences.append({
                         "source": f"Historical Archive of {holder['location']} Government",
-                        "url": "https://tn.gov.in/former_cms",
+                        "url": url_link,
                         "date": f"{holder['start_year']}-{holder['end_year']}",
                         "snippet": f"Historical Record: {holder['person']} served as {holder['position']} of {holder['location']} from {holder['start_year']} to {holder['end_year']}.",
                         "credibility": "High",
