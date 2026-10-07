@@ -54,6 +54,17 @@ def predict_news(text: str):
     # Vectorize
     vec = vectorizer.transform([cleaned])
     
+    # Check if any words matched vocabulary
+    if vec.nnz == 0:
+        return {
+            'label': 'UNKNOWN',
+            'confidence': 50.0,
+            'probability_real': 50.0,
+            'probability_fake': 50.0,
+            'key_tokens': [],
+            'error': 'Words in this short phrase are not in the dataset vocabulary. Please paste full news headlines or article paragraphs for accurate prediction.'
+        }
+    
     # Calculate confidence / probability
     if hasattr(model, 'predict_proba'):
         probs = model.predict_proba(vec)[0]
