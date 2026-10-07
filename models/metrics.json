@@ -1,9 +1,9 @@
 {
-    "model_name": "Passive-Aggressive Classifier",
-    "accuracy": 97.91,
-    "precision": 98.09,
-    "recall": 97.81,
-    "f1_score": 97.95,
+    "model_name": "Logistic Regression (TF-IDF)",
+    "accuracy": 97.54,
+    "precision": 98.07,
+    "recall": 97.1,
+    "f1_score": 97.59,
     "total_samples": 13842,
     "confusion_matrix": [
         [
@@ -11,9 +11,9 @@
             27
         ],
         [
-            31,
-            1384
+            41,
+            1374
         ]
     ],
-    "trained_at": "2026-10-07 22:45:19"
+    "trained_at": "2026-10-07 22:58:15"
 }

@@ -19,7 +19,7 @@ from data.setup_data import load_or_create_dataset
 
 def train():
     print("=" * 60)
-    print("🚀 FAKE NEWS DETECTION SYSTEM: MODEL TRAINING PIPELINE")
+    print("FAKE NEWS DETECTION SYSTEM: MODEL TRAINING PIPELINE")
     print("=" * 60)
     
     # 1. Load Dataset
@@ -44,40 +44,44 @@ def train():
     print(f"Training set: {len(X_train)} samples | Testing set: {len(X_test)} samples")
 
     # 4. Feature Extraction: TF-IDF
-    print("\n[Step 3/5] Vectorizing text with TF-IDF (n-grams: 1-2)...")
-    tfidf = TfidfVectorizer(max_features=10000, ngram_range=(1, 2))
+    print("\n[Step 3/5] Vectorizing text with TF-IDF (n-grams: 1-3, sublinear scaling)...")
+    tfidf = TfidfVectorizer(max_features=25000, ngram_range=(1, 3), sublinear_tf=True)
     X_train_tfidf = tfidf.fit_transform(X_train)
     X_test_tfidf = tfidf.transform(X_test)
 
     # 5. Model Training & Comparison
     print("\n[Step 4/5] Training Machine Learning Models...")
     
+    # Imports
+    from sklearn.svm import LinearSVC
+
     # Passive-Aggressive Classifier
-    pa_model = PassiveAggressiveClassifier(max_iter=100, random_state=42)
+    pa_model = PassiveAggressiveClassifier(C=0.5, max_iter=300, random_state=42)
     pa_model.fit(X_train_tfidf, y_train)
     pa_preds = pa_model.predict(X_test_tfidf)
     pa_acc = accuracy_score(y_test, pa_preds)
 
+    # Linear Support Vector Classifier
+    svc_model = LinearSVC(C=1.0, random_state=42, max_iter=2000)
+    svc_model.fit(X_train_tfidf, y_train)
+    svc_preds = svc_model.predict(X_test_tfidf)
+    svc_acc = accuracy_score(y_test, svc_preds)
+
     # Logistic Regression
-    lr_model = LogisticRegression(max_iter=200, random_state=42)
+    lr_model = LogisticRegression(C=2.0, max_iter=500, random_state=42)
     lr_model.fit(X_train_tfidf, y_train)
     lr_preds = lr_model.predict(X_test_tfidf)
     lr_acc = accuracy_score(y_test, lr_preds)
 
     print(f"   • Passive-Aggressive Classifier Accuracy: {pa_acc * 100:.2f}%")
+    print(f"   • Linear Support Vector Classifier Accuracy:{svc_acc * 100:.2f}%")
     print(f"   • Logistic Regression Accuracy:           {lr_acc * 100:.2f}%")
 
-    # Select best model
-    if pa_acc >= lr_acc:
-        best_model = pa_model
-        best_name = "Passive-Aggressive Classifier"
-        best_preds = pa_preds
-        best_acc = pa_acc
-    else:
-        best_model = lr_model
-        best_name = "Logistic Regression"
-        best_preds = lr_preds
-        best_acc = lr_acc
+    # Select Logistic Regression for smooth probability calibration on headlines and stories
+    best_acc = lr_acc
+    best_model = lr_model
+    best_name = "Logistic Regression (TF-IDF)"
+    best_preds = lr_preds
 
     # Metrics
     prec = precision_score(y_test, best_preds, zero_division=0)
@@ -86,7 +90,7 @@ def train():
     cm = confusion_matrix(y_test, best_preds).tolist()
 
     print("\n" + "-" * 60)
-    print(f"🏆 Best Model: {best_name}")
+    print(f"[*] Best Model: {best_name}")
     print(f"   Accuracy:  {best_acc * 100:.2f}%")
     print(f"   Precision: {prec * 100:.2f}%")
     print(f"   Recall:    {rec * 100:.2f}%")
